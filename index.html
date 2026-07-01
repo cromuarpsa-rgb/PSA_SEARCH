@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PSA Search | PSOC &amp; PSIC Classification Lookup</title>
+<meta name="description" content="Search PSOC and PSIC classification records maintained by the Philippine Statistics Authority." />
+<link rel="icon" href="logo/PSA-logo-1536x1536.webp" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-shell">
+      <section class="login-aside" aria-hidden="true">
+        <div class="login-aside-top">
+          <img src="logo/PSA-logo-1536x1536.webp" alt="" class="login-mark" />
+          <p class="login-kicker">Philippine Statistics Authority</p>
+        </div>
+        <h1 class="login-headline">The classification<br />register, indexed.</h1>
+        <p class="login-sub">Look up Occupation (PSOC), Industry (PSIC), and Highest Grade Completed codes in a single, searchable ledger.</p>
+        <dl class="login-stats" id="loginStats">
+          <div><dt>Sheets</dt><dd>—</dd></div>
+          <div><dt>Records</dt><dd>—</dd></div>
+          <div><dt>Access</dt><dd>Local login</dd></div>
+        </dl>
+      </section>
+
+      <section class="login-panel">
+        <div class="login-panel-head">
+          <img src="logo/PSA-logo-1536x1536.webp" alt="PSA logo" class="login-panel-logo" />
+          <div>
+            <p class="eyebrow">PSA Search System</p>
+            <h2>Sign in</h2>
+          </div>
+        </div>
+        <form id="loginForm" class="login-form" autocomplete="off">
+          <label>
+            <span>Username</span>
+            <input id="username" name="username" type="text" autocomplete="username" required autofocus />
+          </label>
+          <label>
+            <span>Password</span>
+            <div class="password-field">
+              <input id="password" name="password" type="password" autocomplete="current-password" required />
+              <button type="button" id="togglePassword" class="ghost-icon-btn" aria-label="Show password">&#128065;</button>
+            </div>
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+          <p class="form-hint">Default access: <code>admin</code> / <code>admin123</code>. Change this after first login.</p>
+          <p class="form-error" id="loginError" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===================== APP ===================== -->
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="logo/PSA-logo-1536x1536.webp" alt="PSA logo" />
+        <div class="brand-copy">
+          <p class="eyebrow">Philippine Statistics Authority</p>
+          <h1>PSA Search System</h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="themeToggle" class="btn btn-ghost icon-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">&#9788;</button>
+
+        <div class="menu-wrapper" id="devMenuWrapper">
+          <button id="devMenuButton" class="btn btn-ghost icon-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Developer info">i</button>
+          <div class="menu-card" id="devMenu" role="menu">
+            <strong>Claverson Romuar</strong>
+            <span>Registration Kit Operator (National ID)</span>
+          </div>
+        </div>
+
+        <div class="menu-wrapper hidden" id="adminMenuWrapper">
+          <button id="adminMenuButton" class="btn btn-ghost" type="button" aria-haspopup="true" aria-expanded="false">
+            Admin <span class="caret">&#9662;</span>
+          </button>
+          <div class="menu-card menu-card-wide hidden" id="adminMenu" role="menu">
+            <button id="adminAddUser" type="button" class="menu-item" role="menuitem">Create local user</button>
+            <button id="adminManageUsers" type="button" class="menu-item" role="menuitem">Manage local users</button>
+          </div>
+        </div>
+
+        <div class="user-pill">
+          <span class="user-avatar" id="userAvatar">?</span>
+          <span id="currentUserLabel">—</span>
+        </div>
+        <button id="logoutButton" class="btn btn-danger-ghost" type="button">Log out</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="toolbar" role="search">
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true">&#128269;</span>
+          <input id="searchInput" type="search" placeholder="Search occupation, industry, code, or grade… ( / to focus )" autocomplete="off" />
+          <kbd class="search-kbd">/</kbd>
+        </label>
+        <label class="field-picker">
+          <span>Sheet</span>
+          <select id="sheetSelect" aria-label="Sheet filter"></select>
+        </label>
+        <label class="field-picker">
+          <span>Rows</span>
+          <select id="pageSizeSelect" aria-label="Rows per page">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+          </select>
+        </label>
+        <button id="exportCsvButton" class="btn btn-secondary" type="button">Export CSV</button>
+        <button id="clearButton" class="btn btn-ghost" type="button">Clear</button>
+      </section>
+
+      <section class="summary-grid" id="summaryGrid" aria-live="polite">
+        <div class="summary-card">
+          <strong id="fileName">Loading…</strong>
+          <span>Source workbook</span>
+        </div>
+        <div class="summary-card summary-accent">
+          <strong id="totalCount">0</strong>
+          <span>Matching records</span>
+        </div>
+        <div class="summary-card">
+          <strong id="resultCount">0</strong>
+          <span>Shown this page</span>
+        </div>
+        <div class="summary-card">
+          <strong id="pageIndicator">Page 1 of 1</strong>
+          <span>Position</span>
+        </div>
+      </section>
+
+      <section class="sheet-pills" id="sheetPills" aria-label="Sheet tabs"></section>
+
+      <section class="table-shell">
+        <div class="table-status" id="statusText" role="status" aria-live="polite">Loading records…</div>
+        <div class="table-scroll">
+          <table id="resultsTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="tableFooter">
+          <button id="prevPageButton" class="btn btn-ghost" type="button">&#8592; Previous</button>
+          <span id="paginationSummary" class="pagination-summary"></span>
+          <button id="nextPageButton" class="btn btn-ghost" type="button">Next &#8594;</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>PSA Search System — local classification lookup for PSOC, PSIC &amp; HGC records.</span>
+      <span>Developed by Claverson Romuar, Registration Kit Operator (National ID).</span>
+    </footer>
+  </div>
+
+  <!-- ===================== ROW DETAIL MODAL ===================== -->
+  <div id="rowModal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rowModalTitle">
+      <div class="modal-header">
+        <h2 id="rowModalTitle">Record detail</h2>
+        <button class="close-button" type="button" data-close-modal aria-label="Close">&times;</button>
+      </div>
+      <dl class="record-detail" id="rowModalBody"></dl>
+    </div>
+  </div>
+
+  <!-- ===================== CREATE USER MODAL ===================== -->
+  <div id="userModal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+      <div class="modal-header">
+        <div>
+          <h2 id="userModalTitle">Create a local user</h2>
+          <p class="modal-description">Adds a browser-only account for search access. Stored in this browser's local storage only.</p>
+        </div>
+        <button class="close-button" type="button" data-close-modal aria-label="Close">&times;</button>
+      </div>
+      <form id="userForm" class="stack-form" autocomplete="off">
+        <label>
+          <span>New username</span>
+          <input id="newUsername" type="text" required />
+        </label>
+        <label>
+          <span>New password</span>
+          <input id="newPassword" type="password" required minlength="4" />
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Create user</button>
+          <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+        </div>
+        <p class="form-hint">This is a lightweight, browser-only account list. It is not a secure identity system — do not reuse sensitive passwords.</p>
+        <p class="form-error" id="userError" role="alert"></p>
+        <p class="form-success" id="userSuccess" role="status"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MANAGE USERS MODAL ===================== -->
+  <div id="manageUsersModal" class="modal hidden">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="manageUsersTitle">
+      <div class="modal-header">
+        <h2 id="manageUsersTitle">Local users</h2>
+        <button class="close-button" type="button" data-close-modal aria-label="Close">&times;</button>
+      </div>
+      <ul class="user-list" id="userList"></ul>
+      <p class="form-hint">The built-in <code>admin</code> account cannot be removed here.</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
